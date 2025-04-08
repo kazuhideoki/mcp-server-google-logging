@@ -57,3 +57,8 @@ You can run the server in two ways:
 ```sh
 node -- /path/to/mcp-server-google-logging/dist/index.js --project=<project-id>
 ```
+
+## 関連
+
+[gcloud CLI を使用したログエントリの書き込みとクエリ
+](https://cloud.google.com/logging/docs/write-query-log-entries-gcloud?utm_source=chatgpt.com&hl=ja)

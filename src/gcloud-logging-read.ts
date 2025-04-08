@@ -1,24 +1,29 @@
-import { exec } from 'child_process';
-import { promisify } from 'util';
+import { exec } from "child_process";
+import { promisify } from "util";
+import { z } from "zod";
 
 const execPromise = promisify(exec);
 
-interface GcloudLoggingReadOptions {
-  logFilter?: string;
-  billingAccount?: string;
-  bucket?: string;
-  folder?: string;
-  freshness?: string;
-  limit?: number;
-  location?: string;
-  order?: 'desc' | 'asc';
-  organization?: string;
-  project?: string;
-  resourceNames?: string[];
-  view?: string;
-}
+// Define Zod schema for validation
+export const GcloudLoggingReadSchema = z.object({
+  project: z.string(),
+  logFilter: z.string().optional(),
+  billingAccount: z.string().optional(),
+  bucket: z.string().optional(),
+  folder: z.string().optional(),
+  freshness: z.string().optional(),
+  limit: z.number().optional(),
+  location: z.string().optional(),
+  order: z.enum(["desc", "asc"]).optional(),
+  organization: z.string().optional(),
+  resourceNames: z.array(z.string()).optional(),
+  view: z.string().optional(),
+});
 
-export const gcloudLoggingRead = async (options: GcloudLoggingReadOptions = {}) => {
+// Extract TypeScript type from the Zod schema
+export type GcloudLoggingReadOptions = z.infer<typeof GcloudLoggingReadSchema>;
+
+export const gcloudLoggingRead = async (options: GcloudLoggingReadOptions) => {
   const {
     logFilter,
     billingAccount,
@@ -35,12 +40,13 @@ export const gcloudLoggingRead = async (options: GcloudLoggingReadOptions = {}) 
   } = options;
 
   // Build the gcloud command
-  let command = 'gcloud logging read';
+  let command = "gcloud logging read";
 
   // Add log filter if provided
   if (logFilter) {
     command += ` "${logFilter}"`;
   }
+  command += ` --project=${project}`;
 
   // Add optional flags
   if (billingAccount) command += ` --billing-account=${billingAccount}`;
@@ -51,19 +57,18 @@ export const gcloudLoggingRead = async (options: GcloudLoggingReadOptions = {}) 
   if (location) command += ` --location=${location}`;
   if (order) command += ` --order=${order}`;
   if (organization) command += ` --organization=${organization}`;
-  if (project) command += ` --project=${project}`;
-  
+
   if (resourceNames && resourceNames.length > 0) {
-    command += ` --resource-names=${resourceNames.join(',')}`;
+    command += ` --resource-names=${resourceNames.join(",")}`;
   }
-  
+
   if (view) command += ` --view=${view}`;
 
   try {
     const { stdout } = await execPromise(command);
     return stdout;
   } catch (error: unknown) {
-    console.error('Error executing gcloud logging read command:', error);
+    console.error("Error executing gcloud logging read command:", error);
     throw error;
   }
 };
