@@ -1,4 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import {
   CommandLineChoiceParameter,
@@ -45,9 +46,51 @@ const server = new McpServer({
   version: "1.0.0",
 });
 
-server.tool("read", { a: z.number(), b: z.number() }, async ({ a, b }) => {
-  const result = await gcloudLoggingRead();
-  return {
-    content: [{ type: "text", text: String(result) }],
-  };
-});
+server.tool(
+  "read",
+  {
+    logFilter: z.string().optional(),
+    billingAccount: z.string().optional(),
+    bucket: z.string().optional(),
+    folder: z.string().optional(),
+    freshness: z.string().optional(),
+    limit: z.number().optional(),
+    location: z.string().optional(),
+    order: z.enum(["desc", "asc"]).optional(),
+    organization: z.string().optional(),
+    project: z.string().optional(),
+    resourceNames: z.array(z.string()).optional(),
+    view: z.string().optional(),
+  },
+  async (params) => {
+    // Use the project from command line arguments if not specified in the tool parameters
+    const projectParam = params.project || args.project;
+
+    // Clone params and update the project parameter
+    const updatedParams = {
+      ...params,
+      project: projectParam,
+    };
+
+    try {
+      const result = await gcloudLoggingRead(updatedParams);
+      return {
+        content: [{ type: "text", text: String(result) }],
+      };
+    } catch (error: unknown) {
+      console.error("Error reading Google Cloud logs:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error occurred";
+      return {
+        content: [{ type: "text", text: `Error: ${errorMessage}` }],
+      };
+    }
+  },
+);
+
+// Start receiving messages on stdin and sending messages on stdout
+const transport = new StdioServerTransport();
+server.connect(transport);
+
+console.log("MCP Google Logging server started");
+console.log(`Project: ${args.project || "Not specified"}`);

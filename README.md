@@ -47,3 +47,13 @@
 
 - **gcloud logging metrics list** - ログから作成したメトリクスの一覧を表示するんよ。
 - **gcloud logging metrics create / update / delete** - 特定のログ条件に基づいてメトリクスを作成したり、変更、または削除するんよ。- これにより、モニタリングやアラートのトリガーに使えるんよ。
+
+## How to Use
+
+### Running the Server
+
+You can run the server in two ways:
+
+```sh
+node -- /path/to/mcp-server-google-logging/dist/index.js --project=<project-id>
+```
