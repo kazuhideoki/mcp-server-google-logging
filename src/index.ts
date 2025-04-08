@@ -48,7 +48,7 @@ const server = new McpServer({
 });
 
 server.tool("read", GcloudLoggingReadSchema.shape, async (params) => {
-  // Use the project from command line arguments if not specified in the tool parameters -> TODO: README or 修正
+  // Use the project from command line arguments if not specified in the tool parameters
   const projectParam = params.project || args.project;
 
   // Clone params and update the project parameter
@@ -58,9 +58,11 @@ server.tool("read", GcloudLoggingReadSchema.shape, async (params) => {
   };
 
   try {
+    console.log("Calling gcloudLoggingRead with params:", JSON.stringify(updatedParams, null, 2));
     const result = await gcloudLoggingRead(updatedParams);
+    console.log("Result obtained successfully, length:", result.length);
     return {
-      content: [{ type: "text", text: String(result) }],
+      content: [{ type: "text", text: result }],
     };
   } catch (error: unknown) {
     console.error("Error reading Google Cloud logs:", error);
