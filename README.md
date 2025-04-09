@@ -14,6 +14,33 @@
 - 起動時パラメーター
   - プロジェクトID
 
+## ログを取得するための文脈
+
+### 課題
+
+プロジェクトのログに関する情報をどうやって取得するか？
+YS4B, 無印、戸建てで文脈が違う。ログの出力方法やドメイン知識が違う
+これをどのように反映させるのか？
+
+アイデア
+
+- a. gcloud logging の MCP Server に resource として取得できるようにする
+  - この場合、MCP Server として業務知識も持つ前提となってしまう -> OK
+  - 内容: DBスキーマ、ログ、クエリのコツについての知識
+- b. 別の業務知識を取得するための MCP Server を作成する
+  - 疎結合になって嬉しいが、管理が大変かも？
+
+まず、a でやってみる。resource として取得できるようにする。
+
+### resource
+
+- OCPP関連
+  - トランザクション、ステータス、接続状態
+- サービス関連
+  - 予約
+  - 利用ログ
+  - 管理者
+
 ## 制限
 
 - select みたいにフィルタリングできない
@@ -62,3 +89,11 @@ node -- /path/to/mcp-server-google-logging/dist/index.js --project=<project-id>
 
 [gcloud CLI を使用したログエントリの書き込みとクエリ
 ](https://cloud.google.com/logging/docs/write-query-log-entries-gcloud?utm_source=chatgpt.com&hl=ja)
+
+## サンプルプロンプト、メモ
+
+```
+ここ2時間で充電があった 充電器ID(chargePointId) と その充電時間をおしえて。
+log_biz_dev をつかってログを調べて。まず docsで"OCPP" を確認してから調査して
+充電時間は StatusNotification の status が Charging に切り替わり、次のステータスが切り替わるまで。
+```

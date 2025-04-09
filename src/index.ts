@@ -1,4 +1,8 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { z } from "zod";
+import {
+  McpServer,
+  ResourceTemplate,
+} from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
   CommandLineParser,
@@ -8,6 +12,9 @@ import {
   gcloudLoggingRead,
   GcloudLoggingReadSchema,
 } from "./gcloud-logging-read";
+import * as fs from "fs";
+import * as path from "path";
+import * as yaml from "js-yaml";
 
 class GoogleLoggingCommandLine extends CommandLineParser {
   private _projectParam!: CommandLineStringParameter;
@@ -58,7 +65,10 @@ server.tool("read", GcloudLoggingReadSchema.shape, async (params) => {
   };
 
   try {
-    console.log("Calling gcloudLoggingRead with params:", JSON.stringify(updatedParams, null, 2));
+    console.log(
+      "Calling gcloudLoggingRead with params:",
+      JSON.stringify(updatedParams, null, 2),
+    );
     const result = await gcloudLoggingRead(updatedParams);
     console.log("Result obtained successfully, length:", result.length);
     return {
@@ -66,6 +76,43 @@ server.tool("read", GcloudLoggingReadSchema.shape, async (params) => {
     };
   } catch (error: unknown) {
     console.error("Error reading Google Cloud logs:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error occurred";
+    return {
+      content: [{ type: "text", text: `Error: ${errorMessage}` }],
+    };
+  }
+});
+
+// Define schema for docs tool
+const DocsSchema = z.object({
+  type: z.enum(["OCPP"]).optional(),
+});
+
+// Add docs tool
+server.tool("docs", DocsSchema.shape, async (params) => {
+  try {
+    // Read the doc.yaml file
+    const docPath = path.resolve(__dirname, "doc.yaml");
+    const docContent = fs.readFileSync(docPath, "utf8");
+
+    // Parse the YAML content
+    const docData = yaml.load(docContent) as Record<string, unknown>;
+
+    // If type is specified, filter for that specific type
+    if (params.type && docData && params.type in docData) {
+      const filteredData = { [params.type]: docData[params.type] };
+      return {
+        content: [{ type: "text", text: yaml.dump(filteredData) }],
+      };
+    }
+
+    // Return the full documentation
+    return {
+      content: [{ type: "text", text: docContent }],
+    };
+  } catch (error: unknown) {
+    console.error("Error reading documentation:", error);
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error occurred";
     return {

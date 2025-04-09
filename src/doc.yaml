@@ -1,0 +1,36 @@
+OCPP:
+  message:
+    StatusNotification:
+      status:
+        Available: "利用可能な状態。プラグが刺さっていない状態。"
+        Preparing: "充電準備中の状態。プラグは接続されているが、まだ充電開始の処理が完了していない状態。"
+        Charging: "充電中の状態。EVに対して電力が供給されている状態。"
+        SuspendedEV: "EV側により充電が一時停止された状態。EVの内部要求などで充電が中断されている。"
+        SuspendedEVSE: "充電ステーション側の理由（例：スマート充電制御や安全上の措置等）により充電が一時停止された状態。"
+        Finishing: "充電終了処理中の状態。充電セッションの終了に向けて最終処理が行われている状態。"
+        Reserved: "予約済みの状態。特定の利用者のためにコネクタが占有されている状態。"
+        Unavailable: "利用不可能な状態。メンテナンス中やその他の理由により充電できない状態。"
+        Faulted: "故障状態。エラーまたは異常が検出され、充電操作が実施できない状態。"
+      logQuery: jsonPayload.detail.call.action="StatusNotification"
+    StartTransaction:
+      req:
+        description: "充電セッションの開始要求。利用者の認証と充電開始時点の状態（初期エネルギー計測値など）を中央システムに通知するための要求メッセージ。"
+        parameters:
+          connectorId: "利用される充電コネクタの識別子"
+          meterStart: "充電開始時のエネルギー計測値（ワット時などの単位）。"
+        logQuery: jsonPayload.detail.call.action="StartTransaction"
+      conf:
+        description: "充電セッション開始応答。中央システムが要求を受領後、トランザクションの識別子や認証結果（idTagInfo）を返す。"
+        parameters:
+          transactionId: "割り当てられた充電トランザクションの一意識別子。"
+    StopTransaction:
+      req:
+        description: "充電セッションの終了要求。充電終了時のエネルギー計測値、終了時刻、対象トランザクションの識別子、及び終了理由などを中央システムに通知するための要求メッセージ。"
+        parameters:
+          meterStop: "充電終了時のエネルギー計測値。"
+          transactionId: "開始時に割り当てられたトランザクションの識別子。"
+          reason: "（任意）充電終了の理由。例：ユーザー操作、エラー、EVの切断など。"
+          transactionData: "（任意）充電セッションに関連する追加の計測データや詳細情報。"
+        logQuery: jsonPayload.detail.call.action="StopTransaction"
+      conf:
+        description: "充電セッション終了応答。中央システムが停止要求を受領し、その結果や必要に応じて最終的な認証情報（idTagInfo）を返す。"
